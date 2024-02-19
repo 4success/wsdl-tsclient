@@ -16,13 +16,13 @@ This library uses [ts-morph](https://www.npmjs.com/package/ts-morph) to generate
 ## Install
 
 ```sh
-npm i wsdl-tsclient
+npm i @4success/wsdl-tsclient
 ```
 
 or install it with `-g` to have CLI globally available.
 
 ```sh
-npm i -g wsdl-tsclient
+npm i -g @4success/wsdl-tsclient
 ```
 
 ## Usage
@@ -40,7 +40,7 @@ path to output directory (`-o` param). If you want to generate **only typescript
 
 you can also use `npx`
 
-`npx wsdl-tsclient ./soap.wsdl -o ./generated`
+`npx @4success/wsdl-tsclient ./soap.wsdl -o ./generated`
 
 ```bash
 wsdl-tsclient [options] [path]
@@ -69,7 +69,7 @@ Examples:
 ### Generate client programmatically
 
 ```typescript
-import { generateClient } from "wsdl-tsclient";
+import { generateClient } from "@4success/wsdl-tsclient";
 
 parseAndGenerate("./path/to/MyWsdl.wsdl", "./generated/");
 ```
