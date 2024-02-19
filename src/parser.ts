@@ -109,7 +109,7 @@ function parseDefinition(
                             name: stripedPropName,
                             sourceName: propName,
                             description: type,
-                            type: NODE_SOAP_PARSED_TYPES[type] || "string",
+                            type: NODE_SOAP_PARSED_TYPES[type.replace('xs:', '')] || "string",
                             isArray: true,
                         });
                     } else if (type instanceof ComplexTypeElement) {
@@ -169,7 +169,7 @@ function parseDefinition(
                             name: propName,
                             sourceName: propName,
                             description: type,
-                            type: NODE_SOAP_PARSED_TYPES[type] || "string",
+                            type: NODE_SOAP_PARSED_TYPES[type.replace('xs:', '')] || "string",
                             isArray: false,
                         });
                     } else if (type instanceof ComplexTypeElement) {
