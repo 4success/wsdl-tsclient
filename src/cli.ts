@@ -6,7 +6,7 @@ import { Logger } from "./utils/logger";
 import { parseAndGenerate, Options } from "./index";
 import packageJson from "../package.json";
 
-const conf = yargs(hideBin(process.argv.slice(2)))
+const conf = yargs(hideBin(process.argv))
     .version(packageJson.version)
     .usage("wsdl-tsclient [options] [path]")
     .example("", "wsdl-tsclient file.wsdl -o ./generated/")
@@ -15,10 +15,6 @@ const conf = yargs(hideBin(process.argv.slice(2)))
     .option("o", {
         type: "string",
         description: "Output directory",
-    })
-    .option("version", {
-        alias: "v",
-        type: "boolean",
     })
     .option("emitDefinitionsOnly", {
         type: "boolean",
@@ -55,7 +51,8 @@ const conf = yargs(hideBin(process.argv.slice(2)))
     .option("no-color", {
         type: "boolean",
         description: "Logs without colors",
-    }).parseSync();
+    })
+    .parseSync();
 
 // Logger section
 
