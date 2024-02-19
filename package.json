@@ -24,10 +24,6 @@
     "lint": "eslint ./src",
     "lint:fix": "eslint --fix ./src"
   },
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com",
-    "access": "internal"
-  },
   "repository": "git@github.com:arkeero-forks/wsdl-tsclient.git",
   "keywords": [
     "soap",
