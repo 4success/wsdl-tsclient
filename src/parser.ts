@@ -6,6 +6,7 @@ import { changeCase } from "./utils/change-case";
 import { stripExtension } from "./utils/file";
 import { reservedKeywords } from "./utils/javascript";
 import { Logger } from "./utils/logger";
+import { isUrl, downloadWsdl, cleanupTempFile } from "./utils/url";
 
 const NODE_SOAP_PARSED_TYPES: { [type: string]: string } = {
     int: "number",
@@ -57,7 +58,7 @@ function parseDefinition(
     name: string,
     defParts: { [propNameType: string]: any },
     stack: string[],
-    visitedDefs: Array<VisitedDefinition>
+    visitedDefs: Array<VisitedDefinition>,
 ): Definition {
     const defName = changeCase(name, { pascalCase: true });
 
@@ -109,7 +110,7 @@ function parseDefinition(
                             name: stripedPropName,
                             sourceName: propName,
                             description: type,
-                            type: NODE_SOAP_PARSED_TYPES[type.replace('xs:', '')] || "string",
+                            type: NODE_SOAP_PARSED_TYPES[type.replace("xs:", "")] || "string",
                             isArray: true,
                         });
                     } else if (type instanceof ComplexTypeElement) {
@@ -143,7 +144,7 @@ function parseDefinition(
                                     stripedPropName,
                                     type,
                                     [...stack, propName],
-                                    visitedDefs
+                                    visitedDefs,
                                 );
                                 definition.properties.push({
                                     kind: "REFERENCE",
@@ -154,7 +155,7 @@ function parseDefinition(
                                 });
                             } catch (err) {
                                 const e = new Error(
-                                    `Error while parsing Subdefinition for '${stack.join(".")}.${name}'`
+                                    `Error while parsing Subdefinition for '${stack.join(".")}.${name}'`,
                                 );
                                 e.stack.split("\n").slice(0, 2).join("\n") + "\n" + err.stack;
                                 throw e;
@@ -169,7 +170,7 @@ function parseDefinition(
                             name: propName,
                             sourceName: propName,
                             description: type,
-                            type: NODE_SOAP_PARSED_TYPES[type.replace('xs:', '')] || "string",
+                            type: NODE_SOAP_PARSED_TYPES[type.replace("xs:", "")] || "string",
                             isArray: false,
                         });
                     } else if (type instanceof ComplexTypeElement) {
@@ -204,7 +205,7 @@ function parseDefinition(
                                     propName,
                                     type,
                                     [...stack, propName],
-                                    visitedDefs
+                                    visitedDefs,
                                 );
                                 definition.properties.push({
                                     kind: "REFERENCE",
@@ -241,25 +242,49 @@ export async function parseWsdl(wsdlPath: string, options: Partial<ParserOptions
         ...defaultOptions,
         ...options,
     };
-    return new Promise((resolve, reject) => {
+
+    let tempFilePath: string | null = null;
+    let actualWsdlPath = wsdlPath;
+
+    // Check if wsdlPath is a URL and download it
+    if (isUrl(wsdlPath)) {
+        try {
+            tempFilePath = await downloadWsdl(wsdlPath);
+            actualWsdlPath = tempFilePath;
+        } catch (error) {
+            throw new Error(`Failed to fetch WSDL from URL: ${error.message}`);
+        }
+    }
+
+    return new Promise<ParsedWsdl>((resolve, reject) => {
         open_wsdl(
-            wsdlPath,
+            actualWsdlPath,
             { namespaceArrayElements: false, ignoredNamespaces: ["tns", "targetNamespace", "typeNamespace"] },
             function (err, wsdl) {
                 if (err) {
+                    // Clean up temporary file in case of error
+                    if (tempFilePath) {
+                        cleanupTempFile(tempFilePath);
+                    }
                     return reject(err);
                 }
                 if (wsdl === undefined) {
+                    // Clean up temporary file in case of error
+                    if (tempFilePath) {
+                        cleanupTempFile(tempFilePath);
+                    }
                     return reject(new Error("WSDL is undefined"));
                 }
 
                 const parsedWsdl = new ParsedWsdl({ maxStack: options.maxRecursiveDefinitionName });
-                const filename = path.basename(wsdlPath);
+                const filename = isUrl(wsdlPath)
+                    ? new URL(wsdlPath).pathname.split("/").pop() || "remote-wsdl.wsdl"
+                    : path.basename(wsdlPath);
                 parsedWsdl.name = changeCase(stripExtension(filename), {
                     pascalCase: true,
                 });
                 parsedWsdl.wsdlFilename = path.basename(filename);
-                parsedWsdl.wsdlPath = path.resolve(wsdlPath);
+                parsedWsdl.wsdlPath = isUrl(wsdlPath) ? wsdlPath : path.resolve(wsdlPath);
 
                 const visitedDefinitions: Array<VisitedDefinition> = [];
 
@@ -289,7 +314,7 @@ export async function parseWsdl(wsdlPath: string, options: Partial<ParserOptions
                                     // TODO: if `$type` not defined, inline type into function declartion (do not create definition file) - wsimport
                                     const typeName = inputMessage.element.$type ?? inputMessage.element.$name;
                                     const type = parsedWsdl.findDefinition(
-                                        inputMessage.element.$type ?? inputMessage.element.$name
+                                        inputMessage.element.$type ?? inputMessage.element.$name,
                                     );
                                     inputDefinition = type
                                         ? type
@@ -299,7 +324,7 @@ export async function parseWsdl(wsdlPath: string, options: Partial<ParserOptions
                                               typeName,
                                               inputMessage.parts,
                                               [typeName],
-                                              visitedDefinitions
+                                              visitedDefinitions,
                                           );
                                 } else if (inputMessage.parts) {
                                     const type = parsedWsdl.findDefinition(paramName);
@@ -311,11 +336,11 @@ export async function parseWsdl(wsdlPath: string, options: Partial<ParserOptions
                                               paramName,
                                               inputMessage.parts,
                                               [paramName],
-                                              visitedDefinitions
+                                              visitedDefinitions,
                                           );
                                 } else {
                                     Logger.debug(
-                                        `Method '${serviceName}.${portName}.${methodName}' doesn't have any input defined`
+                                        `Method '${serviceName}.${portName}.${methodName}' doesn't have any input defined`,
                                     );
                                 }
                             }
@@ -335,7 +360,7 @@ export async function parseWsdl(wsdlPath: string, options: Partial<ParserOptions
                                               typeName,
                                               outputMessage.parts,
                                               [typeName],
-                                              visitedDefinitions
+                                              visitedDefinitions,
                                           );
                                 } else {
                                     const type = parsedWsdl.findDefinition(paramName);
@@ -347,7 +372,7 @@ export async function parseWsdl(wsdlPath: string, options: Partial<ParserOptions
                                               paramName,
                                               outputMessage.parts,
                                               [paramName],
-                                              visitedDefinitions
+                                              visitedDefinitions,
                                           );
                                 }
                             }
@@ -384,8 +409,19 @@ export async function parseWsdl(wsdlPath: string, options: Partial<ParserOptions
                 parsedWsdl.services = services;
                 parsedWsdl.ports = allPorts;
 
+                // Clean up temporary file if it was created
+                if (tempFilePath) {
+                    cleanupTempFile(tempFilePath);
+                }
+
                 return resolve(parsedWsdl);
-            }
+            },
         );
+    }).catch((error) => {
+        // Make sure to clean up temp file in case of error
+        if (tempFilePath) {
+            cleanupTempFile(tempFilePath);
+        }
+        throw error;
     });
 }

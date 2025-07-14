@@ -33,6 +33,9 @@
     "typescript"
   ],
   "author": "Daniel Derevjanik <daniel.derevjanik@gmail.com>",
+  "maintainers": [
+    "Renan William Alves de Paula <renan@4success.com.br>"
+  ],
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/arkeero-forks/wsdl-tsclient/issues"

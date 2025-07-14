@@ -31,10 +31,11 @@ function addSafeImport(
     imports: OptionalKind<ImportDeclarationStructure>[],
     moduleSpecifier: string,
     namedImport: string,
-    mergedOptions: GeneratorOptions
+    mergedOptions: GeneratorOptions,
 ) {
-    if (mergedOptions.exportAsModule) //exportAsModule
-        moduleSpecifier = `${moduleSpecifier}.js`
+    if (mergedOptions.exportAsModule)
+        //exportAsModule
+        moduleSpecifier = `${moduleSpecifier}.js`;
     if (!imports.find((imp) => imp.moduleSpecifier == moduleSpecifier)) {
         imports.push({
             moduleSpecifier,
@@ -59,7 +60,7 @@ function createProperty(
     type: string,
     doc: string,
     isArray: boolean,
-    optional = true
+    optional = true,
 ): PropertySignatureStructure {
     return {
         kind: StructureKind.PropertySignature,
@@ -76,7 +77,7 @@ function generateDefinitionFile(
     defDir: string,
     stack: string[],
     generated: Definition[],
-    options: GeneratorOptions
+    options: GeneratorOptions,
 ): void {
     const defName = definition.name;
     const defFilePath = path.join(defDir, `${defName}.ts`);
@@ -134,7 +135,7 @@ function generateDefinitionFile(
 export async function generate(
     parsedWsdl: ParsedWsdl,
     outDir: string,
-    options: Partial<GeneratorOptions>
+    options: Partial<GeneratorOptions>,
 ): Promise<void> {
     const mergedOptions: GeneratorOptions = {
         ...defaultOptions,
@@ -178,20 +179,20 @@ export async function generate(
                             defDir,
                             [method.paramDefinition.name],
                             allDefinitions,
-                            mergedOptions
+                            mergedOptions,
                         );
                         addSafeImport(
                             clientImports,
                             `./definitions/${method.paramDefinition.name}`,
                             method.paramDefinition.name,
-                            mergedOptions
+                            mergedOptions,
                         );
                     }
                     addSafeImport(
                         portImports,
                         `../definitions/${method.paramDefinition.name}`,
                         method.paramDefinition.name,
-                        mergedOptions
+                        mergedOptions,
                     );
                 }
                 if (method.returnDefinition !== null) {
@@ -203,20 +204,20 @@ export async function generate(
                             defDir,
                             [method.returnDefinition.name],
                             allDefinitions,
-                            mergedOptions
+                            mergedOptions,
                         );
                         addSafeImport(
                             clientImports,
                             `./definitions/${method.returnDefinition.name}`,
                             method.returnDefinition.name,
-                            mergedOptions
+                            mergedOptions,
                         );
                     }
                     addSafeImport(
                         portImports,
                         `../definitions/${method.returnDefinition.name}`,
                         method.returnDefinition.name,
-                        mergedOptions
+                        mergedOptions,
                     );
                 }
                 // TODO: Deduplicate PortMethods
@@ -230,15 +231,16 @@ export async function generate(
                         },
                         {
                             name: "callback",
-                            type: `(err: any, result: ${method.returnDefinition ? method.returnDefinition.name : "unknown"
-                                }, rawResponse: any, soapHeader: any, rawRequest: any) => void`, // TODO: Use ts-morph to generate proper type
+                            type: `(err: any, result: ${
+                                method.returnDefinition ? method.returnDefinition.name : "unknown"
+                            }, rawResponse: any, soapHeader: any, rawRequest: any) => void`, // TODO: Use ts-morph to generate proper type
                         },
                     ],
                     returnType: "void",
                 });
             } // End of PortMethod
             if (!mergedOptions.emitDefinitionsOnly) {
-                addSafeImport(serviceImports, `../ports/${port.name}`, port.name,mergedOptions);
+                addSafeImport(serviceImports, `../ports/${port.name}`, port.name, mergedOptions);
                 servicePorts.push({
                     name: sanitizePropName(port.name),
                     isReadonly: true,
@@ -260,7 +262,7 @@ export async function generate(
         } // End of Port
 
         if (!mergedOptions.emitDefinitionsOnly) {
-            addSafeImport(clientImports, `./services/${service.name}`, service.name,            mergedOptions);
+            addSafeImport(clientImports, `./services/${service.name}`, service.name, mergedOptions);
             clientServices.push({ name: sanitizePropName(service.name), type: service.name });
 
             serviceFile.addImportDeclarations(serviceImports);
@@ -308,8 +310,9 @@ export async function generate(
                             type: method.paramDefinition ? method.paramDefinition.name : "{}",
                         },
                     ],
-                    returnType: `Promise<[result: ${method.returnDefinition ? method.returnDefinition.name : "unknown"
-                        }, rawResponse: any, soapHeader: any, rawRequest: any]>`,
+                    returnType: `Promise<[result: ${
+                        method.returnDefinition ? method.returnDefinition.name : "unknown"
+                    }, rawResponse: any, soapHeader: any, rawRequest: any]>`,
                 })),
             },
         ]);
@@ -340,8 +343,8 @@ export async function generate(
     indexFile.addExportDeclarations(
         allDefinitions.map((def) => ({
             namedExports: [def.name],
-            moduleSpecifier: `./definitions/${def.name}${mergedOptions.exportAsModule ? ".js": ""}`,
-        }))
+            moduleSpecifier: `./definitions/${def.name}${mergedOptions.exportAsModule ? ".js" : ""}`,
+        })),
     );
     if (!mergedOptions.emitDefinitionsOnly) {
         // TODO: Aggregate all exports during declarations generation
@@ -349,20 +352,20 @@ export async function generate(
         indexFile.addExportDeclarations([
             {
                 namedExports: ["createClientAsync", `${parsedWsdl.name}Client`],
-                moduleSpecifier: `./client${mergedOptions.exportAsModule ? ".js": ""}`,
+                moduleSpecifier: `./client${mergedOptions.exportAsModule ? ".js" : ""}`,
             },
         ]);
         indexFile.addExportDeclarations(
             parsedWsdl.services.map((service) => ({
                 namedExports: [service.name],
-                moduleSpecifier: `./services/${service.name}${mergedOptions.exportAsModule ? ".js": ""}`,
-            }))
+                moduleSpecifier: `./services/${service.name}${mergedOptions.exportAsModule ? ".js" : ""}`,
+            })),
         );
         indexFile.addExportDeclarations(
             parsedWsdl.ports.map((port) => ({
                 namedExports: [port.name],
-                moduleSpecifier: `./ports/${port.name}${mergedOptions.exportAsModule ? ".js": ""}`,
-            }))
+                moduleSpecifier: `./ports/${port.name}${mergedOptions.exportAsModule ? ".js" : ""}`,
+            })),
         );
     }
 

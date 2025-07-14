@@ -8,9 +8,10 @@ import packageJson from "../package.json";
 
 const conf = yargs(hideBin(process.argv))
     .version(packageJson.version)
-    .usage("wsdl-tsclient [options] [path]")
+    .usage("wsdl-tsclient [options] [path|url]")
     .example("", "wsdl-tsclient file.wsdl -o ./generated/")
     .example("", "wsdl-tsclient ./res/**/*.wsdl -o ./generated/")
+    .example("", "wsdl-tsclient https://example.com/service.wsdl -o ./generated/")
     .demandOption(["o"])
     .option("o", {
         type: "string",
@@ -111,15 +112,14 @@ if (conf.folderFromWsdl2LowerCase) {
     options.folderFromWsdl2LowerCase = conf.folderFromWsdl2LowerCase;
 }
 
-
 Logger.debug("Options");
 Logger.debug(JSON.stringify(options, null, 2));
 
 //
 
 if (conf._ === undefined || conf._.length === 0) {
-    Logger.error("No WSDL files found");
-    Logger.debug(`Path: ${conf._}`);
+    Logger.error("No WSDL files or URLs provided");
+    Logger.debug(`Arguments: ${conf._}`);
     process.exit(1);
 }
 
@@ -138,13 +138,24 @@ if (conf._ === undefined || conf._.length === 0) {
             Logger.log(`Found ${matches.length} wsdl files`);
         }
         for (const match of matches) {
-            const wsdlPath = path.resolve(match);
-            const wsdlName = path.basename(wsdlPath);
-            Logger.log(`Generating soap client from "${wsdlName}"`);
+            let wsdlPath: string;
+            let wsdlName: string;
+
+            // Check if it's a URL or file path
+            if (match.startsWith("http://") || match.startsWith("https://")) {
+                wsdlPath = match;
+                wsdlName = new URL(match).pathname.split("/").pop() || "remote-wsdl";
+                Logger.log(`Generating soap client from URL "${wsdlPath}"`);
+            } else {
+                wsdlPath = path.resolve(match);
+                wsdlName = path.basename(wsdlPath);
+                Logger.log(`Generating soap client from file "${wsdlName}"`);
+            }
+
             try {
                 await parseAndGenerate(wsdlPath, path.join(outDir), options);
             } catch (err) {
-                Logger.error(`Error occured while generating client "${wsdlName}"`);
+                Logger.error(`Error occured while generating client from "${wsdlName}"`);
                 Logger.error(`\t${err}`);
                 errorsCount += 1;
             }

@@ -132,7 +132,7 @@ export class ParsedWsdl {
         const defNameToCheck = isInSensitive ? definitionName.toLowerCase() : definitionName;
         if (
             !this.definitions.find((def) =>
-                isInSensitive ? def.name.toLowerCase() === defNameToCheck : def.name === defNameToCheck
+                isInSensitive ? def.name.toLowerCase() === defNameToCheck : def.name === defNameToCheck,
             )
         ) {
             return definitionName;
@@ -142,7 +142,7 @@ export class ParsedWsdl {
                 !this.definitions.find((def) =>
                     isInSensitive
                         ? def.name.toLowerCase() === `${defNameToCheck}${i}`.toLowerCase()
-                        : def.name === `${defNameToCheck}${i}`
+                        : def.name === `${defNameToCheck}${i}`,
                 )
             ) {
                 return `${definitionName}${i}`;
@@ -153,7 +153,7 @@ export class ParsedWsdl {
             }
         }
         throw new Error(
-            `Out of stack (${this._options.maxStack}) for "${definitionName}", there's probably cyclic definition. You can also try to increase maxStack with --TODO option`
+            `Out of stack (${this._options.maxStack}) for "${definitionName}", there's probably cyclic definition. You can also try to increase maxStack with --TODO option`,
         );
     }
 }
