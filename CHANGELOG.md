@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.1] - 2026-11-17
+
+- Inclui `options` e `extraHeaders` opcionais nas assinaturas de métodos SOAP assíncronos e de callback, preservando os tipos de entrada e retorno do WSDL.
+- Valida chamadas com e sem opções em um consumidor TypeScript e fixa o projeto usado pelo executor de testes.
+
 ## [1.4.0] - 2022-04-27
 
 - Fix issue with self recursive WSDL types [#39](https://github.com/dderevjanik/wsdl-tsclient/pull/39) by @mtranter
