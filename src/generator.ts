@@ -235,6 +235,16 @@ export async function generate(
                                 method.returnDefinition ? method.returnDefinition.name : "unknown"
                             }, rawResponse: any, soapHeader: any, rawRequest: any) => void`, // TODO: Use ts-morph to generate proper type
                         },
+                        {
+                            name: "options",
+                            type: 'Parameters<import("soap").SoapMethod>[2]',
+                            hasQuestionToken: true,
+                        },
+                        {
+                            name: "extraHeaders",
+                            type: 'Parameters<import("soap").SoapMethod>[3]',
+                            hasQuestionToken: true,
+                        },
                     ],
                     returnType: "void",
                 });
@@ -308,6 +318,16 @@ export async function generate(
                         {
                             name: camelcase(method.paramName),
                             type: method.paramDefinition ? method.paramDefinition.name : "{}",
+                        },
+                        {
+                            name: "options",
+                            type: 'Parameters<import("soap").SoapMethodAsync>[1]',
+                            hasQuestionToken: true,
+                        },
+                        {
+                            name: "extraHeaders",
+                            type: 'Parameters<import("soap").SoapMethodAsync>[2]',
+                            hasQuestionToken: true,
                         },
                     ],
                     returnType: `Promise<[result: ${
